@@ -29,6 +29,10 @@ with_mock_HTTP({
         expect_true(is.matrix(as.vector(test.ds$catarray)))
         expect_identical(as.vector(test.ds$catarray), ca.values)
     })
+    
+    test_that("as.vector on a time not a date", {
+        expect_true(inherits(as.vector(test.ds$starttime), "POSIXct"))
+    })
 
     test_that("as.data.frame on CrunchDataset yields CrunchDataFrame", {
         expect_false(is.data.frame(as.data.frame(test.ds)))

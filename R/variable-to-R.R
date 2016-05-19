@@ -34,7 +34,7 @@ parse_column <- list(
     },
     datetime=function (col, variable) {
         out <- columnParser("text")(col)
-        if (all(grepl("[0-9]{4}-[0-9]{2}-[0-9]{2}", out))) {
+        if (all(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", out))) {
             ## return Date if resolution >= D
             return(as.Date(out))
         } else {
