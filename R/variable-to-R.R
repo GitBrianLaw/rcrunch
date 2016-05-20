@@ -133,12 +133,17 @@ setMethod("as.vector", "CrunchVariable", function (x, mode) {
 
 from8601 <- function (x) {
     ## Crunch timestamps look like "2015-02-12T10:28:05.632000+00:00"
-
+    ## Neal, when I crtab(~starttime + identity, ds) the times are: '2016-03-30T19:14:18.770'
+    ## and b/c it doesn't have a timezone the strptime() below returns NA
+    ## if true, then I have removed the %z below and it work. 
+    ## Note also how it timezone isn't there then the need to set it based on which datacenter the survey came from, not sure how to do that.
+    
     ## TODO: pull out the ms, as.numeric them, and add to the parsed date
     ## Important for the round trip of datetime data
 
     ## First, strip out ms and the : in the time zone
     x <- sub("\\.[0-9]+", "", sub("^(.*[+-][0-9]{2}):([0-9]{2})$", "\\1\\2", x))
     ## Then parse
-    return(strptime(x, "%Y-%m-%dT%H:%M:%S%z"))
+    if ('data coming from LDC') return(strptime(x, "%Y-%m-%dT%H:%M:%S", tz="UTC"))
+    if ('data coming from PAIX') return(strptime(x, "%Y-%m-%dT%H:%M:%S", tz="America/Los_Angeles"))
 }
