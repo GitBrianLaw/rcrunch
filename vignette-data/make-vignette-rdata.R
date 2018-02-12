@@ -226,6 +226,12 @@ values(categories(ds$nps)) <- c('-100', '0', '100', NA)
 nps.cats_values <- categories(ds$nps)
 nps_tab <- crtabs(mean(nps)~1, ds)
 
+message("12. Joins and Appends")
+ds$id <- VarDef(data=as.character(1:nrow(ds)), name="Identifier", type="text")
+# ds_dim <- capture.output(print(dim(ds)))
+# joinDatasets(ds, ds[c('id', )], by.x='id', by.y='id')
+
+
 save.image(file="../vignettes/vignettes.RData")
 
 with_consent(delete(ds)) ## cleanup

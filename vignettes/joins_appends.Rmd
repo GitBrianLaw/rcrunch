@@ -1,0 +1,83 @@
+---
+title: "Joins and Appends"
+description: "Vignette showing you how to join columns from two Crunch datasets together, as well as how to append rows."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding Variables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+[Previous: subtotals](subtotals.html)
+
+```{r, results='hide', echo=FALSE, message=FALSE}
+## Because the vignette tasks require communicating with a remote host,
+## we do all the work ahead of time and save a workspace, which we load here.
+## We'll then reference saved objects in that as if we had just retrieved them
+## from the server
+library(crunch)
+load("vignettes.RData")
+options(width=120)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Joins in Crunch
+You can join two Crunch datasets together using the `joinDatasets()` function. This is similar to the `merge()` function in base R or a join in SQL. You will need two Crunch datasets that share at least one variable you can use as a key that uniquely identifies each row of the datasets. One important clarification, `joinDatasets()` is *not* the same as the `appendDataset()` function; intuitively if we think of the dataset as a large rectangle of values like in a spreadsheet, then you can distinguish between how `append` adds rows to the bottom of a dataset versus `join` merges columns onto the right edge of the dataset. We will discuss appends further below.
+
+## Example: Join on some new variables
+We might want to join on some new variables to an already existing dataset when we have a new segmentation variable that came out of a statistical model, or some open-ended responses that have been categorized (aka coded) into a new variable. First, we need to have one Crunch dataset which we will join the new variables onto. Second, we need a second Crunch dataset that contains all of the new variables we want to join onto the first, *as well as* a variable that we will use as the key to join (usually something like the respondents' unique identifier that is shared by both datasets). If we need to upload an example .csv file with the coded open-ends, we can do so.
+```{r, eval = FALSE}
+ds_new_vars <- newDataset("~/Desktop/coded_open_ends.csv", name="Open ends to join onto another dataset")
+dim(ds_new_vars)
+```
+```{r, eval = FALSE}
+## [1] 229  2
+```
+Before we try the join let's save a version just to be safe. Then let's check how many variables it contains before the join.
+```{r, eval = FALSE}
+saveVersion(ds, "Before join on new variables from another dataset")
+dim(ds)
+```
+```{r, echo = FALSE}
+cat(ds_dim, sep="\n")
+```
+Now we have our two datasets and can join them together.
+```{r, eval = FALSE}
+joinDatasets(ds, ds_new_vars, by.x='id', by.y='id') # this may take a bit of time to run
+dim(ds)
+```
+```{r, eval = FALSE}
+## [1] 229  48
+```
+
+# Appends in Crunch
+Returning to thinking of a Crunch dataset as a large rectangle of values like in a spreadsheet, we use `appendDataset()` function to add new rows onto the bottom of a dataset. Remember that this differs from `joinDatasets()`. One common use case for appending two Crunch datasets together is when you have a tracking survey (aka tracker). Generally, a tracker is a survey that's asked at one point in time (which we will call "wave 1" of the survey), and then after some waiting period, you run it again (call this "wave 2"). The goal is usually to leave some of the questions the same from wave to wave so that you can analyze time trends. 
+
+## Example: Append on a new wave to a tracker
+First, we need a Crunch dataset that contains wave 1 data. Second, we need a second Crunch dataset that contains the wave 2 data. Note that unlike with a join, we do *not* need a variable to serve as a key. Instead, the append will find all of the variables that are common to both datasets and line those up so that the wave 2 values slide underneath the correct column. For example, if both wave 1 and wave 2 have variables with the alias "Awareness", then the append will align those so that the wave 2 Awareness values begin directly below the last wave 1 Awareness value. 
+
+One common question is "what happens to variables that are unique to either dataset?", for example if wave 2 added a new question about Satisfaction because the product launched since wave 1. The wave which does not have data for that variable will be filled in with `No Data`, which makes sense in our example where Satisfaction was not asked of people in wave 1 and so we would record their responses as what we know about them, no data.
+```{r, eval = FALSE}
+saveVersion(ds_tracker, "Before append on new rows from another dataset")
+dim(ds_tracker)
+```
+```{r, eval = FALSE}
+## [1] 250  47
+```
+```{r, eval = FALSE}
+dim(ds_wave2)
+```
+```{r, eval = FALSE}
+## [1] 251  53
+```
+```{r, eval = FALSE}
+appendDataset(ds_tracker, ds_wave2) # this may take a bit of time to run
+dim(ds_tracker)
+```
+```{r, eval = FALSE}
+## [1] 501  55
+```
+
+[Next: Crunch internals](crunch-internals.html)
