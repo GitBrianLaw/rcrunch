@@ -1,0 +1,92 @@
+---
+title: "Dashboards"
+description: "Vignette showing you how to display a shiny dashboard inside Crunch"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding Variables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+[Previous: subtotals](subtotals.html)
+
+```{r, results='hide', echo=FALSE, message=FALSE}
+## Because the vignette tasks require communicating with a remote host,
+## we do all the work ahead of time and save a workspace, which we load here.
+## We'll then reference saved objects in that as if we had just retrieved them
+## from the server
+library(crunch)
+load("vignettes.RData")
+options(width=120)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Dashboards in Crunch
+You can create a customized dashboard using the `crunchy` library (which is based on R's `shiny` library). To be more specific, we can use the `crunchy` library to generate an app, which we can embed inside a Crunch dataset's Dashboard view. What you can do with a shiny app is extremely broad and there are inspiring [examples](https://www.rstudio.com/products/shiny/shiny-user-showcase/) around the web including plotting model coefficients, wordclouds, and non-survey data.
+
+## A Minimum Working Example
+How to create a shiny app is its own deep topic with many [resources](https://shiny.rstudio.com/tutorial/) at your disposal and so we will not cover it here. For this vignette, we will use the server.R and ui.R files below, which serve as a minimum working example. Please copy the two scripts below into their own .R scripts on your machine and save them to a new directory that contains just those 2 files.
+
+```{r, eval = FALSE}
+# ui.R
+library(crunchy)
+library(shinydashboard)
+shinyUI(
+  dashboardPage(
+    dashboardHeader(disable=TRUE),
+    dashboardSidebar(
+      selectInput(inputId = "pid", label="Political Party", choices=list("Democrats"=1, "Independents"=2, "Republicans"=3))
+    ),
+    dashboardBody(
+      crunchy:::loadCrunchAssets(), # THIS LINE is special and required for crunchy
+      crunchy:::crunchAuthPlaceholder(), # THIS LINE is special and required for crunchy
+      fluidRow(
+        box(plotOutput("plot_age", height="250"), width = 6)
+      )
+    )
+  )
+)
+```
+```{r, eval = FALSE}
+# server.R
+library(crunchy)
+options(httpcache.log="")
+shinyServer(function(input, output, session) {
+    dataset <- shinyDataset("Economist/YouGov Weekly Survey")
+    in_pid <- reactive(if (length(input$pid) == 0) c(1:3) else as.numeric(input$pid))
+    ds <- reactive(dataset()[dataset()$pid3 %in% in_pid()])
+    output$plot_age <- renderPlot({
+      par(las=1); par(mar=c(2,2,2,0))
+      hist(as.vector(ds()$age), main='Age')
+    })
+})
+```
+
+## Running a crunchy app locally
+You will want to develop your crunchy app locally first so you can quickly revise how it looks and what it shows. To do so, open a new R session, then run the four lines below at the console. The last line, `runApp()`, actually builds the app. 
+```{r, eval = FALSE}
+# Note, you may need to install these libraries before running the app for the first time
+# install.packages('crunchy')
+# install.packages('shinydashboard')
+library(crunchy)
+login('your.email@corp.com')
+runApp(, port=4747) # specify any 4 digit number
+```
+The first time you build the app locally you will likely get an error message saying "need to login()". To remedy that, in a web browser, open a new tab and go to `http://local.crunch.io:4747` to see the output. Note that the 4 digit number will be whatever you specified in the port option above (4747 here).
+
+# Embedding a crunchy app in Crunch
+Once you are happy with how your crunchy app looks there are two remaining steps to have it appear in Crunch itself: loading your scripts onto the server, and displaying your app in the Dashboard view.
+
+## Loading your crunchy app scripts onto the server
+Log into the Crunch webapp, then open any dataset. Once the dataset is open, click on the name of the dataset in the upper left corner of the screen, which generates a menu, and click on Notebooks, which will open a new browser tab. 
+
+Next, follow the directions [here](https://github.com/Crunch-io/crunchy/wiki/Deploying-your-Crunchy-app) to load the scripts onto the server.
+
+## Displaying your app in the Dashboard view
+First, copy the url you created in the step above, e.g. `https://shiny.crunch.io/user/{userid}/{app_dir}/` where userid and app_dir are replaced with your information. Then, in the webapp, open the dataset you want to display the crunchy app in. Once the dataset is open, click on the name of the dataset, then click Configure Dashboard. A menu will slide out from the left. Click on the button next to `URL`, then in the adjacent text box, paste in the actual url that you copied in the first step, then click Save. The page should refresh with your crunchy app.
+
+Note that instead of using the GUI to do this last step, you can also use the `dashboard()` function in R, see `? dashboard`.
+
+[Next: Crunch internals](crunch-internals.html)

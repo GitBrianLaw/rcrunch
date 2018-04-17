@@ -231,6 +231,12 @@ ds$id <- VarDef(data=as.character(1:nrow(ds)), name="Identifier", type="text")
 # ds_dim <- capture.output(print(dim(ds)))
 # joinDatasets(ds, ds[c('id', )], by.x='id', by.y='id')
 
+message("13. Dashboards")
+# ds$id <- VarDef(data=as.character(1:nrow(ds)), name="Identifier", type="text")
+# ds_dim <- capture.output(print(dim(ds)))
+# joinDatasets(ds, ds[c('id', )], by.x='id', by.y='id')
+
+
 
 save.image(file="../vignettes/vignettes.RData")
 
