@@ -1,0 +1,69 @@
+---
+title: "Forks and Merging"
+description: "Vignette showing you how to make a draft, or fork a dataset, and then if you'd like to merge that forked dataset back onto the original."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding Variables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+[Previous: subtotals](subtotals.html)
+
+```{r, results='hide', echo=FALSE, message=FALSE}
+## Because the vignette tasks require communicating with a remote host,
+## we do all the work ahead of time and save a workspace, which we load here.
+## We'll then reference saved objects in that as if we had just retrieved them
+## from the server
+library(crunch)
+load("vignettes.RData")
+options(width=120)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Forks (aka Drafts) in Crunch
+We can make a copy of a dataset in Crunch. Using the GUI this is called a Draft, while in the R Crunch library it is called a Fork and uses the `forkDataset()` function. We can also graft this fork and its changes back onto the original dataset using the `mergeFork()` function. 
+
+Usually we will fork a dataset in one of two scenarios: 1) the original dataset is already shared with other people and we do not want to be making a series of potentially disruptive changes while others are viewing the dataset, 2) we want to try some changes that we may or may not want to keep and so by trying those on the fork you do not have to worry about disrupting other viewers or juggling versions of the original dataset, for example when appending a new survey onto a tracking study.
+
+## Example: fork a dataset
+We begin with a Crunch dataset and let's call this the Original dataset and inspect its name and dimensions.
+```{r, eval = FALSE}
+name(ds)
+dim(ds)
+```
+```{r, eval = FALSE}
+[1] Economist/YouGov Weekly Survey
+[1] 229  47
+```
+  
+Next let's fork the Original dataset and print the fork's name and dimensions. Note how the `forkDataset()` function requires us to give the forked dataset a name and we have used the `paste0()` function to build the fork's name around the Original one along with a time stamp.
+```{r, eval = FALSE}
+ds_fork <- forkDataset(ds, paste0("Fork of ", name(ds), ", ", Sys.time()))
+dim(ds)
+```
+```{r, eval = FALSE}
+[1] "Fork of Economist/YouGov Weekly Survey, 2018-04-17 17:10:59"
+[1] 229  47
+```
+
+Now we have our fork dataset and can make changes to our heart's content. For example, we could append on a new wave of a dataset to a tracking study. 
+
+Once we are done with our changes, we can use the `mergeFork()` function to merge the forked dataset back onto the Original dataset.
+```{r, eval = FALSE}
+ds_new_wave <- loadDataset("New Wave, #47 of Brand Tracker")
+appendDataset(ds_fork, ds_new_wave)
+dim(ds_fork)
+## [1] 458  47
+dim(ds)
+## [1] 229  47
+ds <- mergeFork(ds, ds_fork) # Note how we need to assign into the Original dataset
+dim(ds)
+## [1] 458  47
+```
+
+Remember that once you merge a fork back onto the Original dataset, the fork will overwrite the Original. It is wise to make a save point on the Original before you merge back.
+
+[Next: Crunch internals](crunch-internals.html)

@@ -236,7 +236,9 @@ message("13. Dashboards")
 # ds_dim <- capture.output(print(dim(ds)))
 # joinDatasets(ds, ds[c('id', )], by.x='id', by.y='id')
 
-
+message("14. Fork and Merge")
+name_ds <- capture.output(print(name(ds)))
+dim_ds <- capture.output(print(dim(ds)))
 
 save.image(file="../vignettes/vignettes.RData")
 
