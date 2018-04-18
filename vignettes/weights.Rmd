@@ -1,0 +1,83 @@
+---
+title: "Weights"
+description: "Vignette showing you how to turn weights on and off as well as estimate weights."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding Variables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+[Previous: subtotals](subtotals.html)
+
+```{r, results='hide', echo=FALSE, message=FALSE}
+## Because the vignette tasks require communicating with a remote host,
+## we do all the work ahead of time and save a workspace, which we load here.
+## We'll then reference saved objects in that as if we had just retrieved them
+## from the server
+library(crunch)
+load("vignettes.RData")
+options(width=120)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Weights in Crunch
+Because Crunch was built with survey data in mind it has several features around weights including
+
+* Applying respondent level weights to your data.
+* Having more than one variable available to use as the single weight.
+* Controlling who is able to turn weights on and off.
+* Estimating weights using a raking algorithm.
+
+## Applying a weight
+At the outset, it is important to distinguish between: 1) the set of variables we *could* we apply as the weight, 2) among those, which one variable is actually being applied as the weight at any given time.
+
+First, we can check if there are already any variables that are *capable* of being applied as a weight. In this case there are two variables, var1 and var2, either of which we could apply as the respondent level weight (or not). These are the variables that you would see in the GUI if you clicked on the "(Un)Weighted" toggle in the upper rigth corner of the screen.
+```{r, eval = FALSE}
+weightVariables(ds)
+[1] "var1" "var2"
+```
+
+If we want, we can remove all these variables so that none are available as weights in the GUI.
+```{r, eval = FALSE}
+weightVariables(ds) <- NULL
+NULL
+```
+
+Second, to apply a variable as the weight we use the `weight()` function. This both adds the variable to the set of variables we could use as a weight, and applies the variable as the weight to the dataset.
+```{r, eval = FALSE}
+weight(ds) <- ds$var3
+```
+
+To unweight the data we again use the `weight()` function but assign NULL. Note how the variable is still available as one we could use as a weight later and so would appear in the GUI when you click on "(Un)Weighted".
+```{r, eval = FALSE}
+weight(ds) <- NULL
+NULL
+weightVariables(ds)
+[1] "var3"
+```
+
+Lastly and very importantly, we often want to assign a particular variable to serve as the weight by default so that when other users open the dataset it will be weighted to a variable we specified.
+```{r, eval = FALSE}
+settings(ds)$weight <- ds$var3
+[1] https://app.crunch.io/api/datasets/...
+```
+
+## Controlling Permissions to Change Weights
+Editors all have the ability to change if a weight is applied, and if so, which variable. However, Viewers are different in that Editors on a dataset can control whether or not Viewers are able to change the weights. In some cases, users have asked to "save me from myself and don't let me turn the weights off", which is why this permission control exists.
+```{r, eval = FALSE}
+settings(ds)$viewers_can_change_weight <- FALSE
+```
+
+## Estimating a New Weight Variable Using Crunch
+We can estimate a new weight variable directly in Crunch using the `makeWeight()` function. This function allows you to generate a weight variable by supplying a set of categorical variables and the target distribution for each of the variables' categories. Weights are computed by iteratively 'raking' conditional 'cells' to the provided marginal targets.
+```{r, eval = FALSE}
+ds$new_weight <- makeWeight(ds$var10 ~ c(50, 50), 
+  ds$var11 ~ c(25, 25, 25, 25), name = "Weight, Gender and Age")
+weight(ds) <- ds$new_weight
+settings(ds)$weight <- ds$new_weight
+```
+
+[Next: Crunch internals](crunch-internals.html)
